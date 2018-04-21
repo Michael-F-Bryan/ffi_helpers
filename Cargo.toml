@@ -1,6 +1,6 @@
 [package]
 name = "ffi_helpers"
-version = "0.1.0"
+version = "0.1.1-alpha.0"
 authors = ["Michael Bryan <michaelfbryan@gmail.com>"]
 description = "A crate to help make working with FFI easier."
 repository = "https://github.com/Michael-F-Bryan/ffi_helpers"
