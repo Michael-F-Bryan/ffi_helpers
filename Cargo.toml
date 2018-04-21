@@ -1,0 +1,9 @@
+[package]
+name = "ffi_utils"
+version = "0.0.0"
+authors = ["Michael Bryan <michaelfbryan@gmail.com>"]
+
+[dependencies]
+failure = "0.1"
+libc = "0.2.36"
+failure_derive = "0.1"
