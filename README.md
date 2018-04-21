@@ -100,4 +100,5 @@ This is probably the `ffi_utils` crate's **killer feature** as it lets you to
 painlessly run Rust tasks in the background, allowing you to integrate it into
 a larger application/GUI.
 
-Consult the [module docs] for more.
+It is highly recommended to visit the `task` module's docs for a more detailed
+explanation.

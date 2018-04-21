@@ -2,6 +2,15 @@
 name = "ffi_utils"
 version = "0.1.0"
 authors = ["Michael Bryan <michaelfbryan@gmail.com>"]
+description = "A crate to help make working with FFI easier."
+repository = "https://github.com/Michael-F-Bryan/ffi_utils"
+license = "MIT"
+readme = "README.md"
+keywords = ["ffi", "error-handling", "foreign", "extern"]
+categories = ["development-tools::ffi", "rust-patterns", "asynchronous"]
+
+[badges]
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 failure = "0.1"
