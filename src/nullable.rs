@@ -72,7 +72,7 @@ impl Nullable for () {
 ///
 /// ```rust,no_run
 /// # #[macro_use]
-/// # extern crate ffi_utils;
+/// # extern crate ffi_helpers;
 /// struct Foo {
 ///   data: Vec<u8>,
 /// }
@@ -94,7 +94,7 @@ impl Nullable for () {
 ///
 /// ```rust,no_run
 /// # #[macro_use]
-/// # extern crate ffi_utils;
+/// # extern crate ffi_helpers;
 /// struct Foo {
 ///   data: Vec<u8>,
 /// }
@@ -118,7 +118,7 @@ impl Nullable for () {
 ///
 /// ```rust,no_run
 /// # #[macro_use]
-/// # extern crate ffi_utils;
+/// # extern crate ffi_helpers;
 /// # extern crate libc;
 /// use libc::{c_char, c_int};
 /// use std::slice;

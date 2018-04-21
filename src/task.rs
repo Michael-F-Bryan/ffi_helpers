@@ -36,12 +36,12 @@
 //!
 //! ```rust
 //! # #[macro_use]
-//! # extern crate ffi_utils;
+//! # extern crate ffi_helpers;
 //! # extern crate failure;
 //! # use failure::Error;
-//! # use ffi_utils::task::CancellationToken;
-//! # use ffi_utils::Task;
-//! # use ffi_utils::error_handling::*;
+//! # use ffi_helpers::task::CancellationToken;
+//! # use ffi_helpers::Task;
+//! # use ffi_helpers::error_handling::*;
 //! # use std::thread;
 //! # use std::time::Duration;
 //! #[derive(Debug, Clone, Copy)]
@@ -186,7 +186,7 @@ macro_rules! export_task {
         /// This will return `null` if there was no result **or** if there was
         /// an error. If there is an error, we update the last error accordingly.
         ///
-        /// You probably want to call `ffi_utils::error_handling::clear_last_error()`
+        /// You probably want to call `ffi_helpers::error_handling::clear_last_error()`
         /// beforehand to make sure there
         #[allow(dead_code)]
         #[no_mangle]

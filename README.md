@@ -1,4 +1,4 @@
-# FFI Utilities
+# FFI Helpers
 
 A crate to make working with FFI code easier.
 
@@ -96,9 +96,9 @@ various `extern "C"` functions for spawning the `Task` on a background thread,
 periodically checking whether it's done, allowing you to cancel the task, then
 retrieve the result and clean everything up properly afterwards.
 
-This is probably the `ffi_utils` crate's **killer feature** as it lets you to
-painlessly run Rust tasks in the background, allowing you to integrate it into
-a larger application/GUI.
+This is probably the crate's **killer feature** as it lets you to painlessly
+run Rust tasks in the background, allowing you to integrate it into a larger
+application/GUI.
 
 It is highly recommended to visit the `task` module's docs for a more detailed
 explanation.

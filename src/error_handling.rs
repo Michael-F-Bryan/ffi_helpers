@@ -26,13 +26,13 @@
 //!
 //! ```rust
 //! #[macro_use]
-//! extern crate ffi_utils;
+//! extern crate ffi_helpers;
 //! extern crate failure;
 //! extern crate libc;
 //!
 //! use libc::{c_char, c_int};
 //! use std::slice;
-//! use ffi_utils::error_handling;
+//! use ffi_helpers::error_handling;
 //! # use failure::Error;
 //!
 //! fn main() {
@@ -69,7 +69,7 @@
 //!     match do_stuff() {
 //!         Ok(_) => 1, // do_stuff() always errors, so this is unreachable
 //!         Err(e) => {
-//!             ffi_utils::update_last_error(e);
+//!             ffi_helpers::update_last_error(e);
 //!             0
 //!         }
 //!     }
@@ -202,14 +202,14 @@ macro_rules! export_c_symbol {
 }
 
 /// As a workaround for rust-lang/rust#6342, you can use this macro to make sure
-/// the symbols for `ffi_utils`'s error handling are correctly exported in your
+/// the symbols for `ffi_helpers`'s error handling are correctly exported in your
 /// `cdylib`.
 #[macro_export]
 macro_rules! export_error_handling_functions {
     () => {
         #[allow(missing_docs)]
         #[doc(hidden)]
-        pub mod __ffi_utils_errors {
+        pub mod __ffi_helpers_errors {
             export_c_symbol!(fn clear_last_error());
             export_c_symbol!(fn last_error_length() -> ::libc::c_int);
             export_c_symbol!(fn last_error_length_utf16() -> ::libc::c_int);
