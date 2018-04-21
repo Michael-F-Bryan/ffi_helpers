@@ -1,5 +1,5 @@
 //! A crate to help make working with FFI easier.
-//!
+
 extern crate failure;
 #[macro_use]
 extern crate failure_derive;
