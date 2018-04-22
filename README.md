@@ -1,5 +1,9 @@
 # FFI Helpers
 
+[![License](https://img.shields.io/github/license/Michael-F-Bryan/ffi_helpers.svg)](https://raw.githubusercontent.com/Michael-F-Bryan/ffi_helpers/master/LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/ffi_helpers.svg)](https://crates.io/crates/ffi_helpers)
+[![Documentation](https://docs.rs/ffi_helpers/badge.svg)](https://docs.rs/ffi_helpers)
+
 A crate to make working with FFI code easier.
 
 This is the open-source version of a utility crate we use at work. The original
