@@ -21,11 +21,11 @@ FFI code.
 
 Error handling is done via a private thread-local `LAST_ERROR` variable which
 lets you indicate a error using a similar mechanism to `errno`.
-  
+
 The idea is if a Rust function returns a `Result::Err(_)`, it'll pass that
 error to `LAST_ERROR` and then return an *obviously wrong* value (e.g. `null`
 or `0`). The caller then checks for this return and can inspect `LAST_ERROR`
-for more information. 
+for more information.
 
 A macro is provided to let you inspect `LAST_ERROR` from C.
 
@@ -71,12 +71,12 @@ unsafe extern "C" fn foo_get_data(foo: *const Foo) -> *const u8 {
 ### Exception Safety
 
 Exception safety becomes a concern when a bit of Rust code panics and tries to
-unwind across the FFI barrier. At the moment this will abort the program and, 
+unwind across the FFI barrier. At the moment this will abort the program and,
 while no longer straight up *Undefined Behaviour*, this is still a massive pain
-to work around. 
+to work around.
 
 There is a `catch_panic()` function that lets you execute some code and will
-catch any unwinding, updating the `LAST_ERROR` appropriately. The 
+catch any unwinding, updating the `LAST_ERROR` appropriately. The
 `catch_panic!()` macro makes this a little easier and works with the `Nullable`
 trait so you can bail out of a function, returning an error (`Nullable::NULL`).
 
