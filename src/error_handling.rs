@@ -85,7 +85,7 @@ use failure::Error;
 use libc::{c_char, c_int};
 use std::{cell::RefCell, slice};
 
-use nullable::Nullable;
+use crate::nullable::Nullable;
 
 thread_local! {
     static LAST_ERROR: RefCell<Option<Error>> = RefCell::new(None);
@@ -136,7 +136,7 @@ pub fn error_message() -> Option<String> {
 ///
 /// This returns the number of bytes written, or `-1` if there was an error.
 pub unsafe fn error_message_utf8(buf: *mut c_char, length: c_int) -> c_int {
-    null_pointer_check!(buf);
+    crate::null_pointer_check!(buf);
     let buffer = slice::from_raw_parts_mut(buf as *mut u8, length as usize);
 
     copy_error_into_buffer(buffer, |msg| msg.into())
@@ -147,7 +147,7 @@ pub unsafe fn error_message_utf8(buf: *mut c_char, length: c_int) -> c_int {
 ///
 /// This returns the number of bytes written, or `-1` if there was an error.
 pub unsafe fn error_message_utf16(buf: *mut u16, length: c_int) -> c_int {
-    null_pointer_check!(buf);
+    crate::null_pointer_check!(buf);
     let buffer = slice::from_raw_parts_mut(buf, length as usize);
 
     let ret =

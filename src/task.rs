@@ -35,9 +35,6 @@
 //! receives a cancel signal, then return the number of spins.
 //!
 //! ```rust
-//! # #[macro_use]
-//! # extern crate ffi_helpers;
-//! # extern crate failure;
 //! # use failure::Error;
 //! # use ffi_helpers::task::CancellationToken;
 //! # use ffi_helpers::Task;
@@ -64,7 +61,7 @@
 //!
 //! // Generate the various `extern "C"` utility functions for working with the
 //! // `Spin` task. The `spawn` function will be called `spin_spawn`, and so on.
-//! export_task! {
+//! ffi_helpers::export_task! {
 //!     Task: Spin;
 //!     spawn: spin_spawn;
 //!     wait: spin_wait;
@@ -75,42 +72,40 @@
 //!     result_destroy: spin_result_destroy;
 //! }
 //!
-//! fn main() {
-//!     // create our `Spin` task
-//!     let s = Spin;
+//! // create our `Spin` task
+//! let s = Spin;
 //!
-//!     unsafe {
-//!         // spawn the task in the background and get a handle to it
-//!         let handle = spin_spawn(&s);
-//!         assert_eq!(spin_cancelled(handle), 0,
-//!             "The spin shouldn't have been cancelled yet");
+//! unsafe {
+//!     // spawn the task in the background and get a handle to it
+//!     let handle = spin_spawn(&s);
+//!     assert_eq!(spin_cancelled(handle), 0,
+//!         "The spin shouldn't have been cancelled yet");
 //!
-//!         // poll the task. The result can vary depending on the outcome:
-//!         // - If the task completed, get a pointer to the `Output`
-//!         // - If it completed with an error, return `null` and update the
-//!         //   LAST_ERROR appropriately
-//!         // - Return `null` and *don't* set LAST_ERROR if the task isn't done
-//!         clear_last_error();
-//!         let ret = spin_poll(handle);
-//!         assert_eq!(last_error_length(), 0, "There shouldn't have been any errors");
-//!         assert!(ret.is_null(), "The task should still be running");
+//!     // poll the task. The result can vary depending on the outcome:
+//!     // - If the task completed, get a pointer to the `Output`
+//!     // - If it completed with an error, return `null` and update the
+//!     //   LAST_ERROR appropriately
+//!     // - Return `null` and *don't* set LAST_ERROR if the task isn't done
+//!     clear_last_error();
+//!     let ret = spin_poll(handle);
+//!     assert_eq!(last_error_length(), 0, "There shouldn't have been any errors");
+//!     assert!(ret.is_null(), "The task should still be running");
 //!
-//!         // tell the task to stop spinning by sending the cancel signal
-//!         spin_cancel(handle);
+//!     // tell the task to stop spinning by sending the cancel signal
+//!     spin_cancel(handle);
 //!
-//!         // wait for the task to finish and retrieve a pointer to its result
-//!         // Note: this will automatically free the handle, so we don't need
-//!         //       to manually call `spin_handle_destroy()`.
-//!         let got = spin_wait(handle);
+//!     // wait for the task to finish and retrieve a pointer to its result
+//!     // Note: this will automatically free the handle, so we don't need
+//!     //       to manually call `spin_handle_destroy()`.
+//!     let got = spin_wait(handle);
 //!
-//!         assert_eq!(last_error_length(), 0, "There shouldn't have been any errors");
-//!         assert!(!got.is_null(), "Oops!");
+//!     assert_eq!(last_error_length(), 0, "There shouldn't have been any errors");
+//!     assert!(!got.is_null(), "Oops!");
 //!
-//!         let num_spins: usize = *got;
+//!     let num_spins: usize = *got;
 //!
-//!         // don't forget the result is heap allocated so we need to free it
-//!         spin_result_destroy(got);
-//!     }
+//!     // don't forget the result is heap allocated so we need to free it
+//!     spin_result_destroy(got);
 //! }
 //! ```
 //!
@@ -142,8 +137,8 @@ use std::{
     thread,
 };
 
-use error_handling;
-use panic;
+use crate::error_handling;
+use crate::panic;
 
 /// Convenience macro to define the FFI bindings for working with a [`Task`].
 ///
@@ -174,13 +169,13 @@ macro_rules! export_task {
         #[no_mangle]
         $( #[$attr] )*
         pub unsafe extern "C" fn $spawn(task: *const $Task) -> *mut $crate::task::TaskHandle<<$Task as $crate::Task>::Output> {
-            null_pointer_check!(task);
+            $crate::null_pointer_check!(task);
             let task = (&*task).clone();
             let handle = $crate::task::TaskHandle::spawn(task);
             Box::into_raw(Box::new(handle))
         }
 
-        export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
+        $crate::export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
     };
     ($( #[$attr:meta] )* Task: $Task:ty; poll: $poll:ident; $( $tokens:tt )*) => {
         /// Poll the task handle and retrieve the result it's ready.
@@ -196,7 +191,7 @@ macro_rules! export_task {
         #[no_mangle]
         $( #[$attr] )*
         pub unsafe extern "C" fn $poll(handle: *mut $crate::task::TaskHandle<<$Task as $crate::Task>::Output>) -> *mut <$Task as $crate::Task>::Output {
-            null_pointer_check!(handle);
+            $crate::null_pointer_check!(handle);
             match (&*handle).poll() {
                 Some(Ok(value)) => Box::into_raw(Box::new(value)),
                 Some(Err(e)) => {
@@ -207,7 +202,7 @@ macro_rules! export_task {
             }
         }
 
-        export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
+        $crate::export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
     };
     ($( #[$attr:meta] )* Task: $Task:ty; handle_destroy: $handle_destructor:ident; $( $tokens:tt )*) => {
         /// Destroy a task handle once you no longer need it, cancelling the
@@ -221,12 +216,12 @@ macro_rules! export_task {
         #[no_mangle]
         $( #[$attr] )*
         pub unsafe extern "C" fn $handle_destructor(handle: *mut $crate::task::TaskHandle<<$Task as $crate::Task>::Output>) {
-            null_pointer_check!(handle);
+            $crate::null_pointer_check!(handle);
             let handle = Box::from_raw(handle);
             drop(handle);
         }
 
-        export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
+        $crate::export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
     };
     ($( #[$attr:meta] )* Task: $Task:ty; result_destroy: $result_destroy:ident; $( $tokens:tt )*) => {
         /// Destroy the result of a task once you are done with it.
@@ -234,12 +229,12 @@ macro_rules! export_task {
         #[no_mangle]
         $( #[$attr] )*
         pub unsafe extern "C" fn $result_destroy(result: *mut <$Task as $crate::Task>::Output) {
-            null_pointer_check!(result);
+            $crate::null_pointer_check!(result);
             let result = Box::from_raw(result);
             drop(result);
         }
 
-        export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
+        $crate::export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
     };
     ($( #[$attr:meta] )* Task: $Task:ty; wait: $wait:ident; $( $tokens:tt )*) => {
         /// Wait for the task to finish, returning the boxed result and consuming
@@ -255,7 +250,7 @@ macro_rules! export_task {
         pub unsafe extern "C" fn $wait(handle: *mut $crate::task::TaskHandle<<$Task as $crate::Task>::Output>)
             -> *mut <$Task as $crate::Task>::Output
         {
-            null_pointer_check!(handle);
+            $crate::null_pointer_check!(handle);
             let handle = Box::from_raw(handle);
             let result = handle.wait();
 
@@ -268,7 +263,7 @@ macro_rules! export_task {
             }
         }
 
-        export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
+        $crate::export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
     };
     ($( #[$attr:meta] )* Task: $Task:ty; cancel: $cancel:ident; $( $tokens:tt )*) => {
         /// Cancel the task.
@@ -276,11 +271,11 @@ macro_rules! export_task {
         #[no_mangle]
         $( #[$attr] )*
         pub unsafe extern "C" fn $cancel(handle: *mut $crate::task::TaskHandle<<$Task as $crate::Task>::Output>) {
-            null_pointer_check!(handle);
+            $crate::null_pointer_check!(handle);
             (&*handle).cancel();
         }
 
-        export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
+        $crate::export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
     };
     ($( #[$attr:meta] )* Task: $Task:ty; cancelled: $cancelled:ident; $( $tokens:tt )*) => {
         /// Has the task already been cancelled?
@@ -288,7 +283,7 @@ macro_rules! export_task {
         #[no_mangle]
         $( #[$attr] )*
         pub unsafe extern "C" fn $cancelled(handle: *mut $crate::task::TaskHandle<<$Task as $crate::Task>::Output>) -> ::std::os::raw::c_int {
-            null_pointer_check!(handle);
+            $crate::null_pointer_check!(handle);
             if (&*handle).cancelled() {
                 1
             } else {
@@ -296,7 +291,7 @@ macro_rules! export_task {
             }
         }
 
-        export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
+        $crate::export_task!($( #[$attr] )* Task: $Task; $( $tokens )*);
     };
     ($( #[$attr:meta] )* Task: $Task:ty;) => {};
 }
@@ -436,7 +431,7 @@ impl<T> Drop for TaskHandle<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use panic::Panic;
+    use crate::panic::Panic;
     use std::time::Duration;
 
     #[derive(Debug, Clone, Copy)]
@@ -494,7 +489,7 @@ mod tests {
 
     #[test]
     fn use_the_c_api() {
-        use error_handling::*;
+        use crate::error_handling::*;
 
         let s = Spin;
 

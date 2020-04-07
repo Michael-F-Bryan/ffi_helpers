@@ -4,7 +4,7 @@ use std::{
     panic::{self, UnwindSafe},
 };
 
-use error_handling;
+use crate::error_handling;
 
 const DEFAULT_PANIC_MSG: &str = "The program panicked";
 
@@ -80,7 +80,7 @@ impl Panic {
 /// of a concrete error type. This will attempt to downcast the error to various
 /// "common" panic error types, falling back to some stock message if we can't
 /// figure out what the original panic message was.
-pub fn recover_panic_message(e: Box<Any + Send + 'static>) -> Option<String> {
+pub fn recover_panic_message(e: Box<dyn Any + Send + 'static>) -> Option<String> {
     if let Some(msg) = e.downcast_ref::<String>() {
         Some(msg.clone())
     } else if let Some(msg) = e.downcast_ref::<&str>() {
@@ -93,7 +93,7 @@ pub fn recover_panic_message(e: Box<Any + Send + 'static>) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use error_handling::*;
+    use crate::error_handling::*;
 
     #[test]
     fn able_to_catch_panics_and_recover_the_panic_message() {

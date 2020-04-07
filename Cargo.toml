@@ -8,6 +8,7 @@ license = "MIT"
 readme = "README.md"
 keywords = ["ffi", "error-handling", "foreign", "extern"]
 categories = ["development-tools::ffi", "rust-patterns", "asynchronous"]
+edition = "2018"
 
 [badges]
 maintenance = { status = "actively-developed" }
