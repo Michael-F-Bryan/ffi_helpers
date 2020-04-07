@@ -80,6 +80,38 @@ catch any unwinding, updating the `LAST_ERROR` appropriately. The
 `catch_panic!()` macro makes this a little easier and works with the `Nullable`
 trait so you can bail out of a function, returning an error (`Nullable::NULL`).
 
+### Splitting a Closure Into Data and Code
+
+It's quite common for FFI functions that work with callbacks to accept an
+additional `void *user_data` argument pointing to any extra state the user
+may want to use. It doesn't allow the programmer to use
+
+The `split_closure()` function can be used to "split" a pointer to a closure
+into a pointer to its data and an `unsafe extern "C" fn()` which can be used
+as a callback.
+
+Rust closures are implemented by generating a custom type to contain any
+captured state, and an impl for `FnMut()` (or `Fn()`, or `FnOnce()`). This
+function works by casting the closure pointer to `void *` (this is our data)
+and defining a trampoline function which will cast the data back and invoke
+the closure.
+
+It's essentially a generalisation of this:
+
+```rust
+fn split<C>(closure: &mut C) -> (*mut c_void, unsafe extern "C" fn(*mut c_void))
+where C: FnMut()
+{
+    unsafe extern "C" fn trampoline<T>(user_data: *mut c_void) {
+        let closure: &mut T = &mut *(user_data as *mut T);
+
+        closure();
+    }
+
+    (closure as *mut C as *mut c_void, trampoline::<T>)
+}
+```
+
 ### Asynchronous Tasks
 
 The *Task API* helps handle the tricky concurrency issues you encounter when
