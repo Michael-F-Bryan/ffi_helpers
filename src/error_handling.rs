@@ -200,9 +200,11 @@ macro_rules! export_c_symbol {
     }
 }
 
-/// As a workaround for rust-lang/rust#6342, you can use this macro to make sure
-/// the symbols for `ffi_helpers`'s error handling are correctly exported in
-/// your `cdylib`.
+/// As a workaround for [rust-lang/rfcs#2771][2771], you can use this macro to
+/// make sure the symbols for `ffi_helpers`'s error handling are correctly
+/// exported in your `cdylib`.
+///
+/// [2771]: https://github.com/rust-lang/rfcs/issues/2771
 #[macro_export]
 macro_rules! export_error_handling_functions {
     () => {
