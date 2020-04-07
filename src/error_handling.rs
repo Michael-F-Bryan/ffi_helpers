@@ -81,21 +81,18 @@
 //! [`Nullable`]: trait.Nullable.html
 //! [libgit2]: https://github.com/libgit2/libgit2/blob/master/docs/error-handling.md
 
-use std::slice;
-use std::cell::RefCell;
 use failure::Error;
 use libc::{c_char, c_int};
+use std::{cell::RefCell, slice};
 
 use nullable::Nullable;
 
-thread_local!{
+thread_local! {
     static LAST_ERROR: RefCell<Option<Error>> = RefCell::new(None);
 }
 
 /// Clear the `LAST_ERROR`.
-pub extern "C" fn clear_last_error() {
-    let _ = take_last_error();
-}
+pub extern "C" fn clear_last_error() { let _ = take_last_error(); }
 
 /// Take the most recent error, clearing `LAST_ERROR` in the process.
 pub fn take_last_error() -> Option<Error> {
@@ -153,7 +150,8 @@ pub unsafe fn error_message_utf16(buf: *mut u16, length: c_int) -> c_int {
     null_pointer_check!(buf);
     let buffer = slice::from_raw_parts_mut(buf, length as usize);
 
-    let ret = copy_error_into_buffer(buffer, |msg| msg.encode_utf16().collect());
+    let ret =
+        copy_error_into_buffer(buffer, |msg| msg.encode_utf16().collect());
 
     if ret > 0 {
         // utf16 uses two bytes per character
@@ -168,7 +166,8 @@ where
     F: FnOnce(String) -> Vec<B>,
     B: Copy + Nullable,
 {
-    let maybe_error_message: Option<Vec<B>> = error_message().map(|msg| error_msg(msg));
+    let maybe_error_message: Option<Vec<B>> =
+        error_message().map(|msg| error_msg(msg));
 
     let err_msg = match maybe_error_message {
         Some(msg) => msg,
@@ -202,8 +201,8 @@ macro_rules! export_c_symbol {
 }
 
 /// As a workaround for rust-lang/rust#6342, you can use this macro to make sure
-/// the symbols for `ffi_helpers`'s error handling are correctly exported in your
-/// `cdylib`.
+/// the symbols for `ffi_helpers`'s error handling are correctly exported in
+/// your `cdylib`.
 #[macro_export]
 macro_rules! export_error_handling_functions {
     () => {
@@ -238,7 +237,8 @@ mod tests {
 
         update_last_error(e);
 
-        let got_err_msg = LAST_ERROR.with(|e| e.borrow_mut().take().unwrap().to_string());
+        let got_err_msg =
+            LAST_ERROR.with(|e| e.borrow_mut().take().unwrap().to_string());
         assert_eq!(got_err_msg, err_msg);
     }
 
@@ -284,13 +284,18 @@ mod tests {
         update_last_error(e);
 
         let mut buffer: Vec<u8> = vec![0; 40];
-        let bytes_written =
-            unsafe { error_message_utf8(buffer.as_mut_ptr() as *mut c_char, buffer.len() as _) };
+        let bytes_written = unsafe {
+            error_message_utf8(
+                buffer.as_mut_ptr() as *mut c_char,
+                buffer.len() as _,
+            )
+        };
 
         assert!(bytes_written > 0);
         assert_eq!(bytes_written as usize, err_msg.len() + 1);
 
-        let msg = str::from_utf8(&buffer[..bytes_written as usize - 1]).unwrap();
+        let msg =
+            str::from_utf8(&buffer[..bytes_written as usize - 1]).unwrap();
         assert_eq!(msg, err_msg);
     }
 }

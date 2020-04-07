@@ -117,8 +117,8 @@
 //! # Managing Task Output Lifetimes
 //!
 //! The result of a `Task` will be allocated on the heap and then a pointer
-//! returned to the user from the `poll` and `wait` functions. It is the caller's
-//! responsibility to ensure this gets free'd once you're done with it.
+//! returned to the user from the `poll` and `wait` functions. It is the
+//! caller's responsibility to ensure this gets free'd once you're done with it.
 //!
 //! The `export_task!()` macro lets you define a `results_destroy` function
 //! which will free the object for you.
@@ -131,15 +131,19 @@
 //! [`CancellationToken`]: struct.CancellationToken.html
 //! [`export_task!()`]: ../macro.export_task.html
 
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{self, Receiver, TryRecvError};
-use std::panic::UnwindSafe;
-use std::thread;
 use failure::{self, Error};
+use std::{
+    panic::UnwindSafe,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::{self, Receiver, TryRecvError},
+        Arc,
+    },
+    thread,
+};
 
-use panic;
 use error_handling;
+use panic;
 
 /// Convenience macro to define the FFI bindings for working with a [`Task`].
 ///
@@ -156,8 +160,8 @@ use error_handling;
 /// - `handle_destroy`: A destructor for the [`TaskHandle`], for cleaning up the
 ///   task once you're done with it
 ///
-/// You'll always need to provide the concrete [`Task`] type in the macro's first
-/// "argument".
+/// You'll always need to provide the concrete [`Task`] type in the macro's
+/// first "argument".
 ///
 /// [`Task`]: task/trait.Task.html
 /// [`TaskHandle`]: task/struct.TaskHandle.html
@@ -314,7 +318,10 @@ pub trait Task: Send + Sync + Clone {
     ///
     /// [`TaskHandle::spawn()`]: struct.TaskHandle.html#method.spawn
     /// [`export_task!()`]: ../macro.export_task.html
-    fn run(&self, cancel_tok: &CancellationToken) -> Result<Self::Output, Error>;
+    fn run(
+        &self,
+        cancel_tok: &CancellationToken,
+    ) -> Result<Self::Output, Error>;
 }
 
 /// A shareable token to let you notify other tasks they should stop what they
@@ -329,15 +336,11 @@ impl CancellationToken {
     }
 
     /// Has this token already been cancelled?
-    pub fn cancelled(&self) -> bool {
-        self.0.load(Ordering::SeqCst)
-    }
+    pub fn cancelled(&self) -> bool { self.0.load(Ordering::SeqCst) }
 
     /// Cancel the token, notifying anyone else listening that they should halt
     /// what they are doing.
-    pub fn cancel(&self) {
-        self.0.store(true, Ordering::SeqCst);
-    }
+    pub fn cancel(&self) { self.0.store(true, Ordering::SeqCst); }
 
     pub fn is_done(&self) -> Result<(), Cancelled> {
         if self.cancelled() {
@@ -349,9 +352,7 @@ impl CancellationToken {
 }
 
 impl Default for CancellationToken {
-    fn default() -> CancellationToken {
-        CancellationToken::new()
-    }
+    fn default() -> CancellationToken { CancellationToken::new() }
 }
 
 /// An error to indicate a task was cancelled.
@@ -380,12 +381,14 @@ impl<T> TaskHandle<T> {
         thread::spawn(move || {
             error_handling::clear_last_error();
 
-            let got = panic::catch_panic(move || task.run(&tok_2)).map_err(|_| {
-                // we want to preserve panic messages and pass them back to the
-                // main thread so we manually take LAST_ERROR
-                let e = error_handling::take_last_error();
-                e.unwrap_or_else(|| failure::err_msg("The task failed"))
-            });
+            let got =
+                panic::catch_panic(move || task.run(&tok_2)).map_err(|_| {
+                    // we want to preserve panic messages and pass them back to
+                    // the main thread so we manually take
+                    // LAST_ERROR
+                    let e = error_handling::take_last_error();
+                    e.unwrap_or_else(|| failure::err_msg("The task failed"))
+                });
 
             tx.send(got).ok();
         });
@@ -420,28 +423,21 @@ impl<T> TaskHandle<T> {
     }
 
     /// Cancel the background task.
-    pub fn cancel(&self) {
-        self.token.cancel();
-    }
+    pub fn cancel(&self) { self.token.cancel(); }
 
     /// Has this task been cancelled?
-    pub fn cancelled(&self) -> bool {
-        self.token.cancelled()
-    }
+    pub fn cancelled(&self) -> bool { self.token.cancelled() }
 }
 
 impl<T> Drop for TaskHandle<T> {
-    fn drop(&mut self) {
-        self.token.cancel();
-    }
+    fn drop(&mut self) { self.token.cancel(); }
 }
 
 #[cfg(test)]
-#[allow(private_no_mangle_fns)]
 mod tests {
     use super::*;
-    use std::time::Duration;
     use panic::Panic;
+    use std::time::Duration;
 
     #[derive(Debug, Clone, Copy)]
     pub struct Spin;
@@ -449,7 +445,10 @@ mod tests {
     impl Task for Spin {
         type Output = usize;
 
-        fn run(&self, cancel_tok: &CancellationToken) -> Result<Self::Output, Error> {
+        fn run(
+            &self,
+            cancel_tok: &CancellationToken,
+        ) -> Result<Self::Output, Error> {
             let mut spins = 0;
 
             while !cancel_tok.cancelled() {
@@ -477,11 +476,12 @@ mod tests {
         handle.cancel();
 
         let got = handle.wait().unwrap();
-        // the task should have spun 9-12 times (depending on the OS's scheduler)
+        // the task should have spun 9-12 times (depending on the OS's
+        // scheduler)
         assert!(9 <= got && got <= 12);
     }
 
-    export_task!{
+    export_task! {
         Task: Spin;
         spawn: spin_spawn;
         wait: spin_wait;

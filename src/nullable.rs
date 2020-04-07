@@ -43,18 +43,14 @@ impl<T> Nullable for Option<T> {
     const NULL: Self = None;
 
     #[inline]
-    fn is_null(&self) -> bool {
-        self.is_none()
-    }
+    fn is_null(&self) -> bool { self.is_none() }
 }
 
 impl Nullable for () {
     const NULL: Self = ();
 
     #[inline]
-    fn is_null(&self) -> bool {
-        true
-    }
+    fn is_null(&self) -> bool { true }
 }
 
 /// Check if we've been given a null pointer, if so we'll return early.

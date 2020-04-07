@@ -12,8 +12,8 @@ pub mod panic;
 mod split;
 pub mod task;
 
-pub use nullable::{NullPointer, Nullable};
 pub use error_handling::{error_message, take_last_error, update_last_error};
+pub use nullable::{NullPointer, Nullable};
 pub use panic::catch_panic;
 pub use split::{split_closure, Split};
 pub use task::Task;

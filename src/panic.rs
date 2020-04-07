@@ -1,6 +1,8 @@
-use std::any::Any;
-use std::panic::{self, UnwindSafe};
 use failure::Error;
+use std::{
+    any::Any,
+    panic::{self, UnwindSafe},
+};
 
 use error_handling;
 
@@ -41,8 +43,8 @@ where
 {
     let result = panic::catch_unwind(func)
         .map_err(|e| {
-            let panic_msg =
-                recover_panic_message(e).unwrap_or_else(|| DEFAULT_PANIC_MSG.to_string());
+            let panic_msg = recover_panic_message(e)
+                .unwrap_or_else(|| DEFAULT_PANIC_MSG.to_string());
             Error::from(Panic::new(panic_msg))
         })
         .and_then(|v| v);
@@ -52,7 +54,7 @@ where
         Err(e) => {
             error_handling::update_last_error(e);
             Err(())
-        }
+        },
     }
 }
 

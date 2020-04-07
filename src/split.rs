@@ -40,7 +40,9 @@ use std::ffi::c_void;
 ///
 /// The returned function can only be called with the returned pointer, or a
 /// pointer to another `C` closure.
-pub unsafe fn split_closure<C, Args, Ret>(closure: &mut C) -> (*mut c_void, C::Trampoline)
+pub unsafe fn split_closure<C, Args, Ret>(
+    closure: &mut C,
+) -> (*mut c_void, C::Trampoline)
 where
     C: Split<Args, Ret>,
 {
