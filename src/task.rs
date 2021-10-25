@@ -35,7 +35,7 @@
 //! receives a cancel signal, then return the number of spins.
 //!
 //! ```rust
-//! # use failure::Error;
+//! # use anyhow::Error;
 //! # use ffi_helpers::task::CancellationToken;
 //! # use ffi_helpers::Task;
 //! # use ffi_helpers::error_handling::*;
@@ -126,7 +126,7 @@
 //! [`CancellationToken`]: struct.CancellationToken.html
 //! [`export_task!()`]: ../macro.export_task.html
 
-use failure::{self, Error};
+use anyhow::Error;
 use std::{
     panic::UnwindSafe,
     sync::{
@@ -136,9 +136,9 @@ use std::{
     },
     thread,
 };
+use thiserror::Error;
 
-use crate::error_handling;
-use crate::panic;
+use crate::{error_handling, panic};
 
 /// Convenience macro to define the FFI bindings for working with a [`Task`].
 ///
@@ -351,8 +351,8 @@ impl Default for CancellationToken {
 }
 
 /// An error to indicate a task was cancelled.
-#[derive(Debug, Clone, Copy, PartialEq, Fail)]
-#[fail(display = "The task was cancelled")]
+#[derive(Debug, Clone, Copy, PartialEq, Error)]
+#[error("The task was cancelled")]
 pub struct Cancelled;
 
 /// An opaque handle to some task which is running in the background.
@@ -382,7 +382,7 @@ impl<T> TaskHandle<T> {
                     // the main thread so we manually take
                     // LAST_ERROR
                     let e = error_handling::take_last_error();
-                    e.unwrap_or_else(|| failure::err_msg("The task failed"))
+                    e.unwrap_or_else(|| anyhow::anyhow!("The task failed"))
                 });
 
             tx.send(got).ok();
@@ -534,7 +534,7 @@ mod tests {
         type Output = ();
 
         fn run(&self, _: &CancellationToken) -> Result<Self::Output, Error> {
-            panic!(PANIC_MESSAGE)
+            panic!("{}", PANIC_MESSAGE)
         }
     }
 

@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 /// An object which has an "obviously invalid" value, for use with the
 /// [`null_pointer_check!()`][npc] macro.
 ///
@@ -140,8 +142,8 @@ macro_rules! null_pointer_check {
 }
 
 /// A `null` pointer was encountered where it wasn't expected.
-#[derive(Debug, Copy, Clone, PartialEq, Fail)]
-#[fail(display = "A null pointer was passed in where it wasn't expected")]
+#[derive(Debug, Copy, Clone, PartialEq, Error)]
+#[error("A null pointer was passed in where it wasn't expected")]
 pub struct NullPointer;
 
 #[cfg(test)]
