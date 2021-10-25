@@ -1,6 +1,7 @@
 [package]
 name = "ffi_helpers"
-version = "0.2.1-alpha.0"
+version = "0.3.0"
+edition = "2021"
 authors = ["Michael Bryan <michaelfbryan@gmail.com>"]
 description = "A crate to help make working with FFI easier."
 repository = "https://github.com/Michael-F-Bryan/ffi_helpers"
@@ -8,12 +9,11 @@ license = "MIT"
 readme = "README.md"
 keywords = ["ffi", "error-handling", "foreign", "extern"]
 categories = ["development-tools::ffi", "rust-patterns", "asynchronous"]
-edition = "2018"
 
 [badges]
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-failure = "0.1"
+anyhow = "1.0.44"
 libc = "0.2.36"
-failure_derive = "0.1"
+thiserror = "1.0.30"

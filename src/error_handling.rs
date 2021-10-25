@@ -25,15 +25,10 @@
 //! try to write some data into a buffer. The first time through
 //!
 //! ```rust
-//! #[macro_use]
-//! extern crate ffi_helpers;
-//! extern crate failure;
-//! extern crate libc;
-//!
 //! use libc::{c_char, c_int};
 //! use std::slice;
 //! use ffi_helpers::error_handling;
-//! # use failure::Error;
+//! # use anyhow::Error;
 //!
 //! fn main() {
 //!     if unsafe { some_fallible_operation() } != 1 {
@@ -75,13 +70,13 @@
 //!     }
 //! }
 //!
-//! # fn do_stuff() -> Result<(), Error> { Err(failure::err_msg("An error occurred")) }
+//! # fn do_stuff() -> Result<(), Error> { Err(anyhow::anyhow!("An error occurred")) }
 //! ```
 //!
 //! [`Nullable`]: trait.Nullable.html
 //! [libgit2]: https://github.com/libgit2/libgit2/blob/master/docs/error-handling.md
 
-use failure::Error;
+use anyhow::Error;
 use libc::{c_char, c_int};
 use std::{cell::RefCell, slice};
 
@@ -223,7 +218,6 @@ macro_rules! export_error_handling_functions {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use failure;
     use std::str;
 
     fn clear_last_error() {
@@ -235,7 +229,7 @@ mod tests {
         clear_last_error();
 
         let err_msg = "An Error Occurred";
-        let e = failure::err_msg(err_msg);
+        let e = anyhow::anyhow!(err_msg);
 
         update_last_error(e);
 
@@ -249,7 +243,7 @@ mod tests {
         clear_last_error();
 
         let err_msg = "An Error Occurred";
-        let e = failure::err_msg(err_msg);
+        let e = anyhow::anyhow!(err_msg);
         update_last_error(e);
 
         let got_err_msg = take_last_error().unwrap().to_string();
@@ -263,7 +257,7 @@ mod tests {
         let err_msg = "An Error Occurred";
         let should_be = err_msg.len() + 1;
 
-        let e = failure::err_msg(err_msg);
+        let e = anyhow::anyhow!(err_msg);
         update_last_error(e);
 
         // Get a valid error message's length
@@ -282,7 +276,7 @@ mod tests {
 
         let err_msg = "An Error Occurred";
 
-        let e = failure::err_msg(err_msg);
+        let e = anyhow::anyhow!(err_msg);
         update_last_error(e);
 
         let mut buffer: Vec<u8> = vec![0; 40];

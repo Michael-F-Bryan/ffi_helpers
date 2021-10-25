@@ -1,10 +1,5 @@
 //! A crate to help make working with FFI easier.
 
-extern crate failure;
-#[macro_use]
-extern crate failure_derive;
-extern crate libc;
-
 #[macro_use]
 mod nullable;
 #[macro_use]

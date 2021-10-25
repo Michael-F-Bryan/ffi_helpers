@@ -1,8 +1,9 @@
-use failure::Error;
+use anyhow::Error;
 use std::{
     any::Any,
     panic::{self, UnwindSafe},
 };
+use thiserror::Error;
 
 use crate::error_handling;
 
@@ -59,8 +60,8 @@ where
 }
 
 /// A caught panic message.
-#[derive(Debug, Clone, PartialEq, Fail)]
-#[fail(display = "Panic: {}", message)]
+#[derive(Debug, Clone, PartialEq, Error)]
+#[error("Panic: {}", message)]
 pub struct Panic {
     /// The panic message.
     pub message: String,
@@ -80,7 +81,9 @@ impl Panic {
 /// of a concrete error type. This will attempt to downcast the error to various
 /// "common" panic error types, falling back to some stock message if we can't
 /// figure out what the original panic message was.
-pub fn recover_panic_message(e: Box<dyn Any + Send + 'static>) -> Option<String> {
+pub fn recover_panic_message(
+    e: Box<dyn Any + Send + 'static>,
+) -> Option<String> {
     if let Some(msg) = e.downcast_ref::<String>() {
         Some(msg.clone())
     } else if let Some(msg) = e.downcast_ref::<&str>() {
@@ -100,7 +103,7 @@ mod tests {
         let _ = take_last_error();
         let err_msg = "Miscellaneous panic message";
 
-        let got: Result<(), ()> = catch_panic(|| panic!(err_msg));
+        let got: Result<(), ()> = catch_panic(|| panic!("{}", err_msg));
         assert!(got.is_err());
 
         let got_error = take_last_error().unwrap();
