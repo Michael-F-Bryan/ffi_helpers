@@ -105,7 +105,7 @@ pub fn last_error_length() -> c_int {
     LAST_ERROR.with(|prev| {
         prev.borrow()
             .as_ref()
-            .map(|e| e.to_string().len() + 1)
+            .map(|e| format!("{:#}", e).len() + 1)
             .unwrap_or(0)
     }) as c_int
 }
@@ -116,14 +116,14 @@ pub fn last_error_length_utf16() -> c_int {
     LAST_ERROR.with(|prev| {
         prev.borrow()
             .as_ref()
-            .map(|e| e.to_string().encode_utf16().count() + 1)
+            .map(|e| format!("{:#}", e).encode_utf16().count() + 1)
             .unwrap_or(0)
     }) as c_int
 }
 
 /// Peek at the most recent error and get its error message as a Rust `String`.
 pub fn error_message() -> Option<String> {
-    LAST_ERROR.with(|prev| prev.borrow().as_ref().map(|e| e.to_string()))
+    LAST_ERROR.with(|prev| prev.borrow().as_ref().map(|e| format!("{:#}", e)))
 }
 
 /// Peek at the most recent error and write its error message (`Display` impl)
@@ -233,8 +233,8 @@ mod tests {
 
         update_last_error(e);
 
-        let got_err_msg =
-            LAST_ERROR.with(|e| e.borrow_mut().take().unwrap().to_string());
+        let got_err_msg = LAST_ERROR
+            .with(|e| format!("{:#}", e.borrow_mut().take().unwrap()));
         assert_eq!(got_err_msg, err_msg);
     }
 
@@ -246,7 +246,7 @@ mod tests {
         let e = anyhow::anyhow!(err_msg);
         update_last_error(e);
 
-        let got_err_msg = take_last_error().unwrap().to_string();
+        let got_err_msg = format!("{:#}", take_last_error().unwrap());
         assert_eq!(got_err_msg, err_msg);
     }
 
@@ -254,10 +254,10 @@ mod tests {
     fn get_the_last_error_messages_length() {
         clear_last_error();
 
-        let err_msg = "An Error Occurred";
+        let err_msg = "Some Context: An Error Occurred";
         let should_be = err_msg.len() + 1;
 
-        let e = anyhow::anyhow!(err_msg);
+        let e = anyhow::anyhow!("An Error Occurred").context("Some Context");
         update_last_error(e);
 
         // Get a valid error message's length
@@ -274,9 +274,9 @@ mod tests {
     fn write_the_last_error_message_into_a_buffer() {
         clear_last_error();
 
-        let err_msg = "An Error Occurred";
+        let expected = "Some Context: An Error Occurred";
 
-        let e = anyhow::anyhow!(err_msg);
+        let e = anyhow::anyhow!("An Error Occurred").context("Some Context");
         update_last_error(e);
 
         let mut buffer: Vec<u8> = vec![0; 40];
@@ -288,10 +288,10 @@ mod tests {
         };
 
         assert!(bytes_written > 0);
-        assert_eq!(bytes_written as usize, err_msg.len() + 1);
+        assert_eq!(bytes_written as usize, expected.len() + 1);
 
         let msg =
             str::from_utf8(&buffer[..bytes_written as usize - 1]).unwrap();
-        assert_eq!(msg, err_msg);
+        assert_eq!(msg, expected);
     }
 }
