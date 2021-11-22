@@ -38,15 +38,27 @@ use std::ffi::c_void;
 ///
 /// # Safety
 ///
-/// The returned function can only be called with the returned pointer, or a
-/// pointer to another `C` closure.
-pub unsafe fn split_closure<C, Args, Ret>(
-    closure: &mut C,
+///   - The returned function can only be called with the returned pointer, or a
+///     pointer to another `C` closure.
+///
+///   - Such call is only valid within the `'lifetime` of the borrow over the
+///     `closure`, during which such pointer cannot be aliased (_e.g._, no
+///     concurrent calls to the closure).
+///
+///   - The call must be performed within the same thread, unless `C` (_i.e._,
+///     the environment captured by the closure) is `Send`.
+pub fn split_closure<'lifetime, C, Args>(
+    closure: &'lifetime mut C,
 ) -> (*mut c_void, C::Trampoline)
 where
-    C: Split<Args, Ret>,
+    C: Split<Args>,
 {
-    (closure as *mut C as *mut c_void, C::trampoline())
+    (closure as *mut C as *mut c_void, C::TRAMPOLINE)
+}
+
+use private::Sealed;
+mod private {
+    pub trait Sealed<Args> {}
 }
 
 /// A helper trait used by [`split_closure()`] to get a trampoline function
@@ -54,21 +66,25 @@ where
 ///
 /// This trait is automatically implemented for any `FnMut()` callable, you
 /// shouldn't implement it yourself.
-pub trait Split<Args, Ret> {
+pub trait Split<Args> : Sealed<Args> {
     type Trampoline;
 
-    fn trampoline() -> Self::Trampoline;
+    const TRAMPOLINE: Self::Trampoline;
 }
 
 macro_rules! impl_split {
     ($( $outer:ident ),* ; $( $inner:ident ),*) => {
-        impl<Func, Ret, $($outer),*> Split<($( $outer, )*), Ret> for Func
+        impl<Func, Ret, $($outer),*> Sealed<($( $outer, )*)> for Func
+        where
+            Func: FnMut($($outer),*) -> Ret,
+        {}
+        impl<Func, Ret, $($outer),*> Split<($( $outer, )*)> for Func
         where
             Func: FnMut($($outer),*) -> Ret,
         {
             type Trampoline = unsafe extern "C" fn(*mut c_void, $($outer),*) -> Ret;
 
-            fn trampoline() -> Self::Trampoline {
+            const TRAMPOLINE: Self::Trampoline = {
                 // declare a trampoline function which will turn our pointer
                 // back into an `F` and invoke it
 
@@ -87,7 +103,7 @@ macro_rules! impl_split {
                 }
 
                 trampoline::<Func, Ret, $($outer,)*>
-            }
+            };
         }
     };
 }
