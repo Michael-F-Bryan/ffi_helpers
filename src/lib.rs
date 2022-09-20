@@ -13,6 +13,6 @@ pub use crate::{
     error_handling::{error_message, take_last_error, update_last_error},
     nullable::{NullPointer, Nullable},
     panic::catch_panic,
-    split::{split_closure, Split},
+    split::{split_closure, split_closure_trailing_data, Split},
     task::Task,
 };
