@@ -52,7 +52,7 @@ where
 /// Splits a closure into its data part and its code part, allowing it to be
 /// used as a callback by FFI code.
 ///
-/// Provides the same  functionality as ```split_closure```, except it returns the user_data
+/// Provides the same  functionality as [`split_closure()`], except it returns the user_data
 /// as the last parameter of the Callback.
 ///
 /// Use if the C function is expecting a signature in this order:
