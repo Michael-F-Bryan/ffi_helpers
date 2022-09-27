@@ -49,6 +49,29 @@ where
     (closure as *mut C as *mut c_void, C::trampoline())
 }
 
+/// Splits a closure into its data part and its code part, allowing it to be
+/// used as a callback by FFI code.
+///
+/// Provides the same  functionality as [`split_closure()`], except it returns the user_data
+/// as the last parameter of the Callback.
+///
+/// Use if the C function is expecting a signature in this order:
+///
+/// ```
+/// type Callback = unsafe extern "C" fn(usize, *mut c_void) -> usize;
+/// ```
+pub unsafe fn split_closure_trailing_data<C, Args, Ret>(
+    closure: &mut C,
+) -> (*mut c_void, C::TrailingDataTrampoline)
+where
+    C: Split<Args, Ret>,
+{
+    (
+        closure as *mut C as *mut c_void,
+        C::trailing_data_trampoline(),
+    )
+}
+
 /// A helper trait used by [`split_closure()`] to get a trampoline function
 /// which will invoke the closure.
 ///
@@ -56,8 +79,10 @@ where
 /// shouldn't implement it yourself.
 pub trait Split<Args, Ret> {
     type Trampoline;
+    type TrailingDataTrampoline;
 
     fn trampoline() -> Self::Trampoline;
+    fn trailing_data_trampoline() -> Self::TrailingDataTrampoline;
 }
 
 macro_rules! impl_split {
@@ -67,6 +92,7 @@ macro_rules! impl_split {
             Func: FnMut($($outer),*) -> Ret,
         {
             type Trampoline = unsafe extern "C" fn(*mut c_void, $($outer),*) -> Ret;
+            type TrailingDataTrampoline = unsafe extern "C" fn($($outer,)* *mut c_void) -> Ret;
 
             fn trampoline() -> Self::Trampoline {
                 // declare a trampoline function which will turn our pointer
@@ -76,6 +102,21 @@ macro_rules! impl_split {
                 // for the argument
                 #[allow(non_snake_case)]
                 unsafe extern "C" fn trampoline<T, Ret_, $( $inner ),*>(ptr: *mut c_void, $($inner: $inner),*) -> Ret_
+                where
+                    T: FnMut($($inner),*) -> Ret_,
+                {
+                    debug_assert!(!ptr.is_null());
+
+                    let callback: &mut T = &mut *(ptr as *mut T);
+
+                    callback($($inner),*)
+                }
+
+                trampoline::<Func, Ret, $($outer,)*>
+            }
+            fn trailing_data_trampoline() -> Self::TrailingDataTrampoline {
+                #[allow(non_snake_case)]
+                unsafe extern "C" fn trampoline<T, Ret_, $( $inner ),*>($($inner: $inner,)* ptr: *mut c_void) -> Ret_
                 where
                     T: FnMut($($inner),*) -> Ret_,
                 {
